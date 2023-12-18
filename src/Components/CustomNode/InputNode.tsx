@@ -10,13 +10,13 @@ interface NodeProps {
   selected: boolean;
 }
 
-const InputNode: React.FC<NodeProps> = ({ data, selected }) => {
+const InputNode45: React.FC<NodeProps> = ({ data, selected }) => {
 
 
   return (
     <div className="text-updater-node"    style={{background: "#" ,border: "2px solid #cdc7c4 " , padding: '10px', color: "#e6232a" }}>
       <h1>
-        ywgsfdifashdoasjdpasoapodj
+        Teste
       </h1>
       <div>
         <div >{data.heading}</div>
@@ -28,4 +28,4 @@ const InputNode: React.FC<NodeProps> = ({ data, selected }) => {
   );
 };
 
-export default memo(InputNode);
+export default memo(InputNode45);

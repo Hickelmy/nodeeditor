@@ -7,7 +7,7 @@ import ReactFlow, {
   ReactFlowProvider,
   Edge,
   Node as ReactFlowNode,
-  Panel,
+  // Panel,
   // useReactFlow,
   // MiniMap,
   Controls,
@@ -17,8 +17,7 @@ import ReactFlow, {
 // Components
 import Node from "../Components/CustomNode/MessageNode";
 
-
-
+import ColorSelectorNode from "./CustomNode/Test/customColorPicker";
 
 // Utils
 import {
@@ -31,10 +30,10 @@ import "reactflow/dist/style.css";
 import "./dnd.css";
 import "./updatenode.css";
 import Sidebar from "./Sidebar/Sidebar";
-import { darkTheme, lightTheme } from "./theme";
+import InputNode from "./CustomNode/InputNode/index";
+// import { darkTheme, lightTheme } from "./theme";
 
-
-const getNodeId = () => `randomnode_${+new Date()}`;
+// const getNodeId = () => `randomnode_${+new Date()}`;
 
 interface NodeData {
   heading: string;
@@ -44,12 +43,15 @@ interface NodeData {
 interface CustomNode extends ReactFlowNode {
   data: NodeData;
 }
+const nodeTypes = {
+  node: Node,
+  color: ColorSelectorNode,
+  inputNode : InputNode,
+};
 
-
-
-interface FlowInstance {
-  toObject(): any;
-}
+// interface FlowInstance {
+//   toObject(): any;
+// }
 
 let id = 0;
 const getId = (): string => `dndnode_${id++}`;
@@ -59,19 +61,19 @@ const flowKey = "flow";
 const OverviewFlow: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLInputElement>(null);
-  const [rfInstance, setRfInstance] = useState<FlowInstance | null>(null);
+  // const [rfInstance, setRfInstance] = useState<FlowInstance | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<any>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [selectedNode, setSelectedNode] = useState<CustomNode | null>(null);
   const [isSelected, setIsSelected] = useState(false);
-  const [typeSelected, setTypeSelected] = useState('');
+  // const [typeSelected, setTypeSelected] = useState("");
   const [mode, setMode] = useState("dark");
   // const [nodes, setNodes, onNodesChange] = useNodesState<ReactFlowNode>([]);
   // const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   // const { setViewport } = useReactFlow();
-  const nodeTypes = { node:  Node };
+
 
   const [newAddNode, setNewAddNode] = useState(() => {
     const storedValue = localStorage.getItem("newAddNode");
@@ -110,76 +112,33 @@ const OverviewFlow: React.FC = () => {
     event.dataTransfer.dropEffect = "move";
   };
 
-  const onDrop = (event: React.DragEvent<HTMLDivElement>): void => {
-    console.log("Event: ", event.dataTransfer.getData("application/reactflow"));
+  const onDrop = useCallback(
+    (event: any) => {
+      event.preventDefault();
+      const type = event.dataTransfer.getData("application/reactflow");
+      console.log("type : ", type);
 
-    event.preventDefault();
-    if (!reactFlowWrapper.current) return;
+      // check if the dropped element is valid
+      if (typeof type === "undefined" || !type) {
+        return;
+      }
 
-    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
 
-    const type = event.dataTransfer.getData("application/reactflow");
-    const label = event.dataTransfer.getData("content");
-
-    setTypeSelected(type)
-
-    const position = reactFlowInstance?.project({
-      x: event.clientX - reactFlowBounds.left,
-      y: event.clientY - reactFlowBounds.top,
-    });
-
-    if (position && type === "node") {
-      const newNode: CustomNode = {
+      const newNode = {
         id: getId(),
         type,
         position,
-        data: { heading: `Novo Node`, content: label },
+        data: { label: `${type} node` },
       };
 
-      setNodes((es) => es.concat(newNode));
-      setSelectedNode(newNode);
-    }
-
-    if (position && type === "process_node") {
-
-      const InputNode: CustomNode = {
-        id: getId(),
-        type,
-        position,
-        data: { heading: `Novo Processo`, content: label },
-      };
-
-      setNodes((es) => es.concat(InputNode));
-      setSelectedNode(InputNode);
-    }
-
-    if (position && type === "group_node") {
-
-      const groupNode: CustomNode = {
-        id: getId(),
-        type,
-        position,
-        data: { heading: `Novo Grupo`, content: label },
-      };
-
-      setNodes((es) => es.concat(groupNode));
-      setSelectedNode(groupNode);
-
-    }
-
-    if (position && type === "machine_node") {
-
-      const machineNode: CustomNode = {
-        id: getId(),
-        type,
-        position,
-        data: { heading: `Nova Maquina`, content: label },
-      };
-
-      setNodes((es) => es.concat(machineNode));
-      setSelectedNode(machineNode);
-    }
-  };
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [reactFlowInstance]
+  );
 
   const onConnect = (connection: Edge | any): void => {
     setEdges((eds) =>
@@ -225,67 +184,6 @@ const OverviewFlow: React.FC = () => {
     );
   }, [nodeName, setNodes, selectedNode]);
 
-  const theme = mode === "light" ? lightTheme : darkTheme;
-
-  const toggleMode = () => {
-    setMode((m) => (m === "light" ? "dark" : "light"));
-  };
-
-  const onAdd = useCallback(() => {
-    const incrementY = 100;
-    const startX = 100;
-
-    const newAddNode = nodes.length + 1;
-    localStorage.setItem("newAddNode", String(newAddNode));
-
-    const lastNodeY =
-      nodes.length === 0 ? 0 : nodes[nodes.length - 1].position.y;
-
-    const newNode = {
-      id: getNodeId(),
-      data: { label: `Node: ${newAddNode}` },
-      type: "Node",
-      position: {
-        x: startX,
-        y: lastNodeY + incrementY,
-      },
-    };
-
-    setNodes((nds) => nds.concat(newNode));
-
-    //  // Atualize o valor de newAddNode após adicionar um novo nó
-    // setNewAddNode((prevValue) => prevValue + 1);
-
-    // // Armazene o novo valor de newAddNode no localStorage
-    // localStorage.setItem('newAddNode', String(newAddNode));
-  }, [setNodes, nodes]);
-
-  const onSave = useCallback(() => {
-    if (rfInstance) {
-      const flow = rfInstance.toObject();
-      localStorage.setItem(flowKey, JSON.stringify(flow));
-    }
-  }, [rfInstance]);
-
-  // const onRestore = useCallback(() => {
-  //   const restoreFlow = async () => {
-  //     const flow = localStorage.getItem(flowKey);
-
-  //     if (flow !== null) {
-  //       const parsedFlow = JSON.parse(flow);
-
-  //       if (parsedFlow) {
-  //         const { x = 0, y = 0, zoom = 1 } = parsedFlow.viewport || {};
-  //         setNodes(parsedFlow.nodes || []);
-  //         setEdges(parsedFlow.edges || []);
-  //         // setViewport({ x, y, zoom });
-  //       }
-  //     }
-  //   };
-
-  //   restoreFlow();
-  // }, [setNodes, setEdges]);
-
   const nodeColor = (node: any) => {
     switch (node.type) {
       case "input":
@@ -296,7 +194,6 @@ const OverviewFlow: React.FC = () => {
         return "#ff0072";
     }
   };
-
 
   return (
     <>
@@ -318,36 +215,19 @@ const OverviewFlow: React.FC = () => {
               snapToGrid
               onDragOver={onDragOver}
               attributionPosition="top-right"
-              style={{ background: theme.bg }}
+              // style={{ background: theme.bg }}
             >
               <Background color="#aaa" gap={16} />
             </ReactFlow>
           </div>
-          {/* <MiniMap
-            nodeStrokeColor={(n) => {
-              if (n.type === "input") return "#0041d0";
-              if (n.type === "selectorNode") return theme.bg;
-              if (n.type === "output") return "#ff0072";
-            }}
-            nodeColor={(n) => {
-              if (n.type === "selectorNode") return theme.bg;
-              return "#fff";
-            }}
-          /> */}
 
           <MiniMap
             nodeColor={nodeColor}
             nodeStrokeWidth={3}
             zoomable
             pannable
+            position="bottom-left"
           />
-
-          <Panel position="bottom-right">
-            <button onClick={onSave}>Salvar</button>
-            {/* <button onClick={onRestore}>Resetar</button> */}
-            <button onClick={onAdd}>Adicionar um Node</button>
-            <button onClick={toggleMode}>Toggle Dark Mode</button>
-          </Panel>
 
           <Sidebar
             isSelected={isSelected}
