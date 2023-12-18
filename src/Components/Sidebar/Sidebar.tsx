@@ -35,14 +35,18 @@ const Sidebar: React.FC<SidebarProps> = ({
             setNodeName={setNodeName}
           />
         ) : (
+          <> 
           <div
-            className="dndnode input"
+            className="dndnode process"
             onDragStart={(event) => onDragStart(event, "node", "message")}
             draggable
           >
             Novo Node
           </div>
+
+          </>
         )}
+      
       </aside>
     </>
   );

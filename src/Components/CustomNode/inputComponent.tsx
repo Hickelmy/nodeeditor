@@ -1,16 +1,30 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 // import { getNode } from '../core/repos/Components';
 import { Handle , Position } from 'reactflow';
 import AbstractComponent from '../Card';
 import { Input } from '@mui/material';
 import { getNode } from '../Core';
 
-export default function InputComponent(props: any) {
-  const [componentValue, setComponentValue] = useState(props.data.value);
+
+
+interface NodeProps {
+  data: {
+    heading: string;
+    content: string;
+    value: string;
+    id: string;
+  };
+  selected: boolean;
+}
+
+  const InputNode2: React.FC<NodeProps> = ({ data, selected }) => {
+
+
+  const [componentValue, setComponentValue] = useState(data.value);
   const [isConnected, setIsConnected] = useState(false);
 
   const updateTarget = (value: string) => {
-    let targetId = props.id + 1;
+    let targetId = data.id + 1;
     let target = getNode(targetId);
     target.data.execute(target, value);
   };
@@ -30,7 +44,8 @@ export default function InputComponent(props: any) {
 
   return (
     <>
-      <AbstractComponent title={'Input'}>
+      <AbstractComponent title={data.heading}>
+        <div>{data.content}</div>
         <Input onChange={changeValue} />
         <Handle
           // id="b" 
@@ -45,3 +60,6 @@ export default function InputComponent(props: any) {
     </>
   );
 }
+
+export default memo(InputNode2);
+

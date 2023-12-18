@@ -17,6 +17,9 @@ import ReactFlow, {
 // Components
 import Node from "../Components/CustomNode/MessageNode";
 
+
+
+
 // Utils
 import {
   nodes as initialNodes,
@@ -29,9 +32,7 @@ import "./dnd.css";
 import "./updatenode.css";
 import Sidebar from "./Sidebar/Sidebar";
 import { darkTheme, lightTheme } from "./theme";
-import CustomDeleteEdge from "./CustomEdge/deleteEdge";
 
-const nodeTypes = { node: Node };
 
 const getNodeId = () => `randomnode_${+new Date()}`;
 
@@ -44,6 +45,8 @@ interface CustomNode extends ReactFlowNode {
   data: NodeData;
 }
 
+
+
 interface FlowInstance {
   toObject(): any;
 }
@@ -51,7 +54,7 @@ interface FlowInstance {
 let id = 0;
 const getId = (): string => `dndnode_${id++}`;
 const flowKey = "flow";
-const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
+// const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 const OverviewFlow: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -62,11 +65,13 @@ const OverviewFlow: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [selectedNode, setSelectedNode] = useState<CustomNode | null>(null);
   const [isSelected, setIsSelected] = useState(false);
+  const [typeSelected, setTypeSelected] = useState('');
   const [mode, setMode] = useState("dark");
   // const [nodes, setNodes, onNodesChange] = useNodesState<ReactFlowNode>([]);
   // const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   // const { setViewport } = useReactFlow();
+  const nodeTypes = { node:  Node };
 
   const [newAddNode, setNewAddNode] = useState(() => {
     const storedValue = localStorage.getItem("newAddNode");
@@ -106,6 +111,8 @@ const OverviewFlow: React.FC = () => {
   };
 
   const onDrop = (event: React.DragEvent<HTMLDivElement>): void => {
+    console.log("Event: ", event.dataTransfer.getData("application/reactflow"));
+
     event.preventDefault();
     if (!reactFlowWrapper.current) return;
 
@@ -114,12 +121,14 @@ const OverviewFlow: React.FC = () => {
     const type = event.dataTransfer.getData("application/reactflow");
     const label = event.dataTransfer.getData("content");
 
+    setTypeSelected(type)
+
     const position = reactFlowInstance?.project({
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
     });
 
-    if (position) {
+    if (position && type === "node") {
       const newNode: CustomNode = {
         id: getId(),
         type,
@@ -131,7 +140,45 @@ const OverviewFlow: React.FC = () => {
       setSelectedNode(newNode);
     }
 
-    
+    if (position && type === "process_node") {
+
+      const InputNode: CustomNode = {
+        id: getId(),
+        type,
+        position,
+        data: { heading: `Novo Processo`, content: label },
+      };
+
+      setNodes((es) => es.concat(InputNode));
+      setSelectedNode(InputNode);
+    }
+
+    if (position && type === "group_node") {
+
+      const groupNode: CustomNode = {
+        id: getId(),
+        type,
+        position,
+        data: { heading: `Novo Grupo`, content: label },
+      };
+
+      setNodes((es) => es.concat(groupNode));
+      setSelectedNode(groupNode);
+
+    }
+
+    if (position && type === "machine_node") {
+
+      const machineNode: CustomNode = {
+        id: getId(),
+        type,
+        position,
+        data: { heading: `Nova Maquina`, content: label },
+      };
+
+      setNodes((es) => es.concat(machineNode));
+      setSelectedNode(machineNode);
+    }
   };
 
   const onConnect = (connection: Edge | any): void => {
@@ -143,7 +190,7 @@ const OverviewFlow: React.FC = () => {
     );
   };
 
-  const [nodeName, setNodeName] = useState("Node 1");
+  const [nodeName, setNodeName] = useState("");
 
   useEffect(() => {
     const node = nodes.filter((node) => node.selected);
@@ -250,9 +297,6 @@ const OverviewFlow: React.FC = () => {
     }
   };
 
-  const edgeTypes = {
-    "custom-edge": CustomDeleteEdge,
-  };
 
   return (
     <>
@@ -275,7 +319,6 @@ const OverviewFlow: React.FC = () => {
               onDragOver={onDragOver}
               attributionPosition="top-right"
               style={{ background: theme.bg }}
-              edgeTypes={edgeTypes}
             >
               <Background color="#aaa" gap={16} />
             </ReactFlow>
